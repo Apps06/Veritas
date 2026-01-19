@@ -1,0 +1,21 @@
+{
+  "manifest_version": 3,
+  "name": "Veritas",
+  "version": "3.0",
+  "permissions": ["contextMenus", "scripting", "activeTab"],
+  "host_permissions": [
+    "http://127.0.0.1:5000/*",
+    "<all_urls>"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "commands": {
+    "verify-news": {
+      "suggested_key": {
+        "default": "Alt+Shift+C"
+      },
+      "description": "Verify selected news with Veritas"
+    }
+  }
+}

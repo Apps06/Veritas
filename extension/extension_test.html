@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Veritas Extension Simulation</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; }
+        #result { margin-top: 20px; border: 1px solid #ccc; padding: 10px; min-height: 100px; }
+        .success { color: green; }
+        .error { color: red; }
+    </style>
+</head>
+<body>
+    <h1>Extension Backend Test</h1>
+    <p>Simulating request to http://127.0.0.1:5000/analyze</p>
+    <button id="test-btn">Test Backend Connection</button>
+    <div id="result">Waiting...</div>
+
+    <script>
+        document.getElementById('test-btn').addEventListener('click', () => {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = "Sending request...";
+
+            fetch("http://127.0.0.1:5000/analyze", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ 
+                    text: "New AI model discovers potential cure for cancer in deep sea coral",
+                    include_realtime: true
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log("Data received:", data);
+                
+                // Simulate the background.js logic I just fixed
+                let socialPosts = [];
+                const socialCtx = data.realtime && data.realtime.social_context;
+                let logicStatus = "Logic Check: ";
+
+                if (socialCtx) {
+                    if (Array.isArray(socialCtx)) {
+                        socialPosts = socialCtx;
+                        logicStatus += "Parsed as Array. ";
+                    } else if (typeof socialCtx === 'object') {
+                        if (socialCtx.twitter) socialPosts = socialPosts.concat(socialCtx.twitter);
+                        if (socialCtx.reddit) socialPosts = socialPosts.concat(socialCtx.reddit);
+                        logicStatus += "Parsed as Dictionary. ";
+                    }
+                }
+
+                resultDiv.innerHTML = `
+                    <h3 class="success">Success!</h3>
+                    <p><strong>Verdict:</strong> ${data.verdict}</p>
+                    <p><strong>Logic Status:</strong> ${logicStatus}</p>
+                    <p><strong>Social Posts Found:</strong> ${socialPosts.length}</p>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                `;
+            })
+            .catch(error => {
+                console.error("Error:", error);
+                resultDiv.innerHTML = `<h3 class="error">Error</h3><p>${error.message}</p>`;
+            });
+        });
+    </script>
+</body>
+</html>

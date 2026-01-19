@@ -1,0 +1,21 @@
+flask
+flask-cors
+transformers
+torch
+exa-py
+tavily-python
+python-dotenv
+Pillow
+torchvision
+requests
+tweepy
+praw
+beautifulsoup4
+scikit-learn
+openai
+easyocr
+# Desktop App Dependencies
+pystray>=0.19.5
+keyboard>=0.13.5
+pyperclip>=1.8.2
+win10toast-click>=0.1.2
