@@ -1,4 +1,4 @@
-# 🛡️ Veritas: AI-Powered Truth Verification Ecosystem
+# 🛡️ Veritas: AI-Powered Fake news Verification system
 
 Veritas is a multi-modal news verification system designed to combat misinformation and deepfakes. It combines fine-tuned NLP models, neural web search, and social media analysis to provide real-time credibility assessments.
 
