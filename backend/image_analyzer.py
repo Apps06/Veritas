@@ -169,11 +169,11 @@ class ImageAnalyzer:
             return avg_ai / total, avg_real / total
         return 0.5, 0.5
 
-    def analyze_image(self, image_data_base64):
+    def analyze_image(self, image_data_base64, openai_analyzer=None):
         """
         Analyze an image for:
-        1. AI generation/deepfake detection
-        2. Text extraction via OCR (for fake news verification)
+        1. AI generation/deepfake detection (OpenAI Priority)
+        2. Text extraction via OCR
         """
         if not self.has_detector:
             return {"error": "Image detection model not available"}
@@ -198,12 +198,37 @@ class ImageAnalyzer:
                 new_size = (int(image.size[0] * ratio), int(image.size[1] * ratio))
                 image = image.resize(new_size, Image.Resampling.LANCZOS)
             
-            print(f"Analyzing image: size={image.size}, custom_model={self.using_custom}")
+            print(f"Analyzing image: size={image.size}, has_openai={openai_analyzer is not None}")
             
             # 1. Extract text via OCR
             extracted_text = self.extract_text(image)
             
-            # 2. Get AI/deepfake predictions
+            # 2. Try OpenAI Vision FIRST (Higher Accuracy)
+            if openai_analyzer and openai_analyzer.has_openai:
+                print("Prioritizing OpenAI Vision analysis...")
+                ai_result = openai_analyzer.analyze_image(encoded)
+                if ai_result and not ai_result.get("error"):
+                    ai_verdict = ai_result.get("verdict", "")
+                    
+                    # Map OpenAI verdict to our format
+                    if "AI Generated" in ai_verdict or "Manipulated" in ai_verdict:
+                        color = "#e74c3c"
+                    elif "Authentic" in ai_verdict:
+                        color = "#2ecc71"
+                    else:
+                        color = "#f39c12"
+                        
+                    return {
+                        "verdict": ai_verdict,
+                        "confidence": ai_result.get("confidence", 85),
+                        "color": color,
+                        "reason": ai_result.get("reasoning", "OpenAI analysis"),
+                        "model_used": "OpenAI GPT-4 Vision",
+                        "extracted_text": extracted_text,
+                        "has_text": len(extracted_text) > 10
+                    }
+            
+            # 3. Fallback to Local Models (Stricter Thresholds)
             if self.using_custom:
                 ai_score, real_score = self._analyze_with_custom(image)
                 model_info = "Custom Veritas Model"
@@ -214,13 +239,15 @@ class ImageAnalyzer:
             ai_percentage = round(ai_score * 100, 2)
             real_percentage = round(real_score * 100, 2)
             
-            # Decision logic with stricter thresholds
-            if ai_score > 0.65:
+            # Stricter thresholds to prevent false positives
+            HIGH_CONFIDENCE = 0.80  # Increased from 0.65
+            
+            if ai_score > HIGH_CONFIDENCE:
                 verdict = "AI Generated"
                 color = "#e74c3c"
                 confidence = ai_percentage
                 reason = f"High AI probability detected ({confidence:.1f}%). [{model_info}]"
-            elif real_score > 0.65:
+            elif real_score > HIGH_CONFIDENCE:
                 verdict = "Likely Authentic"
                 color = "#2ecc71"
                 confidence = real_percentage
@@ -245,7 +272,7 @@ class ImageAnalyzer:
                 "real_score": real_percentage,
                 "model_used": model_info,
                 "using_custom_model": self.using_custom,
-                "extracted_text": extracted_text,  # NEW: OCR text for fake news check
+                "extracted_text": extracted_text,
                 "has_text": len(extracted_text) > 10
             }
             

@@ -18,6 +18,10 @@ import pyperclip
 from config import Config
 from news_analyzer import NewsAnalyzer
 from openai_service import OpenAIAnalyzer
+from image_analyzer import ImageAnalyzer
+from io import BytesIO
+from PIL import ImageGrab
+import base64
 
 COLORS = {
     "bg": "#0a0e14",
@@ -46,22 +50,43 @@ class VeritasSimple:
             Config.validate()
             self.news = NewsAnalyzer()
             self.ai = OpenAIAnalyzer()
+            self.image_analyzer = ImageAnalyzer()
             print("✓ Services ready")
         except Exception as e:
             print(f"Error: {e}")
             self.news = None
             self.ai = None
+            self.image_analyzer = None
     
     def analyze_clipboard(self):
         if self.is_analyzing:
             return
         
         try:
-            print("[DEBUG] Hotkey triggered! Reading clipboard...")
+            print("[DEBUG] Hotkey triggered! Checking clipboard...")
+            
+            # 1. Check for Image first
+            im = ImageGrab.grabclipboard()
+            if im:
+                print("[DEBUG] Image detected in clipboard!")
+                self.show_mini_notification("Analyzing Image...")
+                self.is_analyzing = True
+                
+                # Convert to base64
+                buffered = BytesIO()
+                im.save(buffered, format="PNG")
+                img_str = base64.b64encode(buffered.getvalue()).decode()
+                
+                thread = threading.Thread(target=self._analyze_image, args=(img_str,))
+                thread.daemon = True
+                thread.start()
+                return
+
+            # 2. Check for Text using pyperclip (more reliable for text)
             text = pyperclip.paste()
             if not text or len(text.strip()) < 10:
                 print(f"[DEBUG] Selection too short or empty: '{text}'")
-                self.show_mini_notification("Copy text first!")
+                self.show_mini_notification("Copy text/image first!")
                 return
             
             print(f"[DEBUG] Analyzing text: {text[:50]}...")
@@ -151,6 +176,49 @@ class VeritasSimple:
             return "LIKELY REAL", 75, reasoning or "AI verified claim."
         return "UNCERTAIN", 50, reasoning or "AI inconclusive."
     
+    def _analyze_image(self, image_base64):
+        try:
+            print(f"\nAnalyzing Image...")
+            
+            if not self.image_analyzer:
+                self.show_mini_notification("Image Analyzer not loaded")
+                return
+
+            # Analyze image
+            result = self.image_analyzer.analyze_image(image_base64, openai_analyzer=self.ai)
+            
+            if result and not result.get("error"):
+                verdict = result.get("verdict", "Uncertain")
+                confidence = result.get("confidence", 0)
+                reason = result.get("reason", "")
+                color = result.get("color", "#f39c12")
+                
+                # Check for extracted text
+                extracted_text = result.get("extracted_text", "")
+                if extracted_text and len(extracted_text) > 10:
+                    reason += f"\n\nOCR Text: '{extracted_text[:40]}...'"
+                
+                print(f"✓ Image Verdict: {verdict}")
+                
+                # Mock result for show_window
+                self.last_result = {
+                    "verdict": verdict,
+                    "confidence": confidence,
+                    "reasoning": reason,
+                    "sources": [],
+                    "claim": "Image Analysis",
+                    "extracted_text": extracted_text
+                }
+                self.show_result_window()
+            else:
+                self.show_mini_notification("Image analysis failed")
+                
+        except Exception as e:
+            print(f"Image analysis error: {e}")
+            self.show_mini_notification("Image analysis error")
+        finally:
+            self.is_analyzing = False
+
     def show_mini_notification(self, message):
         """Show a tiny popup notification"""
         def show():

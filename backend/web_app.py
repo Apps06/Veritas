@@ -5,9 +5,11 @@ Works 100% reliably (no Windows API issues)
 from flask import Flask, render_template_string, request, jsonify
 from news_analyzer import NewsAnalyzer
 from openai_service import OpenAIAnalyzer
+from image_analyzer import ImageAnalyzer
 from config import Config
 import webbrowser
 import threading
+import base64
 
 app = Flask(__name__)
 
@@ -15,6 +17,7 @@ app = Flask(__name__)
 Config.validate()
 news = NewsAnalyzer()
 ai = OpenAIAnalyzer()
+image_analyzer = ImageAnalyzer()
 
 HTML = """
 <!DOCTYPE html>
@@ -203,6 +206,23 @@ HTML = """
         .feedback-btn.no:hover {
             background: #f85149;
         }
+        
+        .tab-btn {
+            background: transparent;
+            border: 1px solid #30363d;
+            padding: 10px 20px;
+            color: #8b949e;
+            cursor: pointer;
+            border-radius: 6px;
+            margin: 0;
+            font-size: 1em;
+        }
+        
+        .tab-btn.active {
+            background: #1f6feb;
+            color: white;
+            border-color: #1f6feb;
+        }
     </style>
 </head>
 <body>
@@ -213,8 +233,26 @@ HTML = """
         </header>
         
         <div class="input-card">
-            <textarea id="claim" placeholder="Paste news headline or claim here..."></textarea>
-            <button onclick="analyze()">Analyze for Fake News</button>
+            <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                <button onclick="showTab('text')" id="btn-text" class="tab-btn active">Text Analysis</button>
+                <button onclick="showTab('image')" id="btn-image" class="tab-btn">Image Analysis</button>
+            </div>
+
+            <div id="tab-text">
+                <textarea id="claim" placeholder="Paste news headline or claim here..."></textarea>
+                <button onclick="analyze()">Analyze Text</button>
+            </div>
+            
+            <div id="tab-image" style="display: none; text-align: center;">
+                <input type="file" id="imageInput" accept="image/*" style="display: none;" onchange="handleImageSelect(this)">
+                <div id="dropZone" onclick="document.getElementById('imageInput').click()" 
+                     style="border: 2px dashed #30363d; border-radius: 8px; padding: 40px; cursor: pointer; transition: all 0.2s;">
+                    <p style="font-size: 1.2em; margin-bottom: 10px;">📸 Drop image here or click to upload</p>
+                    <p style="color: #8b949e; font-size: 0.9em;">Supports deepfake detection & text verification</p>
+                    <img id="imagePreview" style="max-width: 100%; max-height: 300px; margin-top: 20px; border-radius: 8px; display: none;">
+                </div>
+                <button onclick="analyzeImage()" style="margin-top: 20px;">Analyze Image</button>
+            </div>
         </div>
         
         <div id="loading">
@@ -226,6 +264,67 @@ HTML = """
     </div>
     
     <script>
+        function showTab(tab) {
+            document.getElementById('tab-text').style.display = tab === 'text' ? 'block' : 'none';
+            document.getElementById('tab-image').style.display = tab === 'image' ? 'block' : 'none';
+            document.getElementById('btn-text').classList.toggle('active', tab === 'text');
+            document.getElementById('btn-image').classList.toggle('active', tab === 'image');
+            document.getElementById('result').style.display = 'none';
+        }
+
+        function handleImageSelect(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = document.getElementById('imagePreview');
+                    img.src = e.target.result;
+                    img.style.display = 'block';
+                    document.getElementById('dropZone').style.borderColor = '#58a6ff';
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        async function analyzeImage() {
+            const input = document.getElementById('imageInput');
+            if (!input.files || !input.files[0]) {
+                alert('Please select an image first');
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.readAsDataURL(input.files[0]);
+            reader.onload = async function() {
+                const base64Image = reader.result;
+                
+                document.getElementById('loading').style.display = 'block';
+                document.getElementById('result').style.display = 'none';
+                
+                try {
+                    const response = await fetch('/analyze-image', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({image: base64Image})
+                    });
+                    
+                    const data = await response.json();
+                    displayResult({
+                        verdict: data.verdict,
+                        confidence: data.confidence,
+                        reasoning: data.reason,
+                        claim: "Image Analysis",
+                        sources: [],
+                        isImage: true,
+                        extractedText: data.extracted_text
+                    });
+                } catch (error) {
+                    alert('Error: ' + error.message);
+                } finally {
+                    document.getElementById('loading').style.display = 'none';
+                }
+            };
+        }
+
         async function analyze() {
             const claim = document.getElementById('claim').value.trim();
             if (!claim) {
@@ -256,9 +355,10 @@ HTML = """
             const resultDiv = document.getElementById('result');
             
             let verdictClass = 'uncertain';
-            if (data.verdict.includes('FAKE') || data.verdict.includes('SATIRE')) {
+            const v = data.verdict.toUpperCase();
+            if (v.includes('FAKE') || v.includes('AI GENERATED') || v.includes('SATIRE')) {
                 verdictClass = 'fake';
-            } else if (data.verdict.includes('REAL')) {
+            } else if (v.includes('REAL') || v.includes('AUTHENTIC')) {
                 verdictClass = 'real';
             }
             
@@ -273,6 +373,14 @@ HTML = """
                 sourcesHTML += '</div>';
             }
             
+            let extraHTML = '';
+            if (data.extractedText && data.extractedText.length > 10) {
+                extraHTML = `<div class="section">
+                    <div class="section-title">OCR Extracted Text</div>
+                    <div style="font-style: italic; color: #aaa;">"${data.extractedText}"</div>
+                </div>`;
+            }
+            
             resultDiv.innerHTML = `
                 <div class="verdict-banner ${verdictClass}">
                     <div class="verdict-text">${data.verdict}</div>
@@ -280,7 +388,7 @@ HTML = """
                 </div>
                 
                 <div class="section">
-                    <div class="section-title">Claim</div>
+                    <div class="section-title">Target</div>
                     <div>${data.claim}</div>
                 </div>
                 
@@ -289,6 +397,7 @@ HTML = """
                     <div>${data.reasoning}</div>
                 </div>
                 
+                ${extraHTML}
                 ${sourcesHTML}
                 
                 <div class="feedback">
@@ -402,6 +511,18 @@ def open_browser():
     import time
     time.sleep(1.5)
     webbrowser.open('http://127.0.0.1:5000')
+
+@app.route('/analyze-image', methods=['POST'])
+def analyze_image():
+    data = request.json
+    image_base64 = data.get('image', '')
+    
+    if not image_base64:
+        return jsonify({"error": "No image provided"}), 400
+        
+    print("\nAnalyzing Image...")
+    result = image_analyzer.analyze_image(image_base64, openai_analyzer=ai)
+    return jsonify(result)
 
 if __name__ == '__main__':
     print("\n" + "="*60)
