@@ -1,0 +1,326 @@
+{
+  "sources": {
+    "reuters.com": {
+      "score": 95,
+      "total_checks": 0,
+      "fake_count": 0,
+      "true_count": 0,
+      "last_updated": "2026-02-05T15:57:49.959610",
+      "category": "trusted"
+    },
+    "apnews.com": {
+      "score": 95,
+      "total_checks": 0,
+      "fake_count": 0,
+      "true_count": 0,
+      "last_updated": "2026-02-05T15:57:49.959626",
+      "category": "trusted"
+    },
+    "bbc.com": {
+      "score": 92,
+      "total_checks": 0,
+      "fake_count": 0,
+      "true_count": 0,
+      "last_updated": "2026-02-05T15:57:49.959631",
+      "category": "trusted"
+    },
+    "bbc.co.uk": {
+      "score": 92,
+      "total_checks": 0,
+      "fake_count": 0,
+      "true_count": 0,
+      "last_updated": "2026-02-05T15:57:49.959634",
+      "category": "trusted"
+    },
+    "nytimes.com": {
+      "score": 90,
+      "total_checks": 0,
+      "fake_count": 0,
+      "true_count": 0,
+      "last_updated": "2026-02-05T15:57:49.959637",
+      "category": "trusted"
+    },
+    "theguardian.com": {
+      "score": 88,
+      "total_checks": 0,
+      "fake_count": 0,
+      "true_count": 0,
+      "last_updated": "2026-02-05T15:57:49.959639",
+      "category": "trusted"
+    },
+    "wsj.com": {
+      "score": 90,
+      "total_checks": 0,
+      "fake_count": 0,
+      "true_count": 0,
+      "last_updated": "2026-02-05T15:57:49.959641",
+      "category": "trusted"
+    },
+    "bloomberg.com": {
+      "score": 90,
+      "total_checks": 0,
+      "fake_count": 0,
+      "true_count": 0,
+      "last_updated": "2026-02-05T15:57:49.959643",
+      "category": "trusted"
+    },
+    "npr.org": {
+      "score": 88,
+      "total_checks": 0,
+      "fake_count": 0,
+      "true_count": 0,
+      "last_updated": "2026-02-05T15:57:49.959645",
+      "category": "trusted"
+    },
+    "aljazeera.com": {
+      "score": 85,
+      "total_checks": 0,
+      "fake_count": 0,
+      "true_count": 0,
+      "last_updated": "2026-02-05T15:57:49.959647",
+      "category": "trusted"
+    },
+    "factcheck.org": {
+      "score": 98,
+      "total_checks": 0,
+      "fake_count": 0,
+      "true_count": 0,
+      "last_updated": "2026-02-05T15:57:49.959649",
+      "category": "trusted"
+    },
+    "snopes.com": {
+      "score": 97,
+      "total_checks": 0,
+      "fake_count": 0,
+      "true_count": 0,
+      "last_updated": "2026-02-05T15:57:49.959651",
+      "category": "trusted"
+    },
+    "politifact.com": {
+      "score": 97,
+      "total_checks": 0,
+      "fake_count": 0,
+      "true_count": 0,
+      "last_updated": "2026-02-05T15:57:49.959653",
+      "category": "trusted"
+    },
+    "fullfact.org": {
+      "score": 96,
+      "total_checks": 0,
+      "fake_count": 0,
+      "true_count": 0,
+      "last_updated": "2026-02-05T15:57:49.959655",
+      "category": "trusted"
+    },
+    "checkyourfact.com": {
+      "score": 92,
+      "total_checks": 0,
+      "fake_count": 0,
+      "true_count": 0,
+      "last_updated": "2026-02-05T15:57:49.959658",
+      "category": "trusted"
+    },
+    "nature.com": {
+      "score": 95,
+      "total_checks": 0,
+      "fake_count": 0,
+      "true_count": 0,
+      "last_updated": "2026-02-05T15:57:49.959743",
+      "category": "trusted"
+    },
+    "scientificamerican.com": {
+      "score": 92,
+      "total_checks": 0,
+      "fake_count": 0,
+      "true_count": 0,
+      "last_updated": "2026-02-05T15:57:49.959753",
+      "category": "trusted"
+    },
+    "sciencenews.org": {
+      "score": 90,
+      "total_checks": 0,
+      "fake_count": 0,
+      "true_count": 0,
+      "last_updated": "2026-02-05T15:57:49.959758",
+      "category": "trusted"
+    },
+    "techcrunch.com": {
+      "score": 80,
+      "total_checks": 0,
+      "fake_count": 0,
+      "true_count": 0,
+      "last_updated": "2026-02-05T15:57:49.959761",
+      "category": "trusted"
+    },
+    "wired.com": {
+      "score": 82,
+      "total_checks": 0,
+      "fake_count": 0,
+      "true_count": 0,
+      "last_updated": "2026-02-05T15:57:49.959765",
+      "category": "trusted"
+    },
+    "theverge.com": {
+      "score": 78,
+      "total_checks": 0,
+      "fake_count": 0,
+      "true_count": 0,
+      "last_updated": "2026-02-05T15:57:49.959768",
+      "category": "trusted"
+    },
+    "arstechnica.com": {
+      "score": 85,
+      "total_checks": 0,
+      "fake_count": 0,
+      "true_count": 0,
+      "last_updated": "2026-02-05T15:57:49.959771",
+      "category": "trusted"
+    },
+    "ndtv.com": {
+      "score": 82,
+      "total_checks": 0,
+      "fake_count": 0,
+      "true_count": 0,
+      "last_updated": "2026-02-05T15:57:49.959791",
+      "category": "trusted"
+    },
+    "thehindu.com": {
+      "score": 85,
+      "total_checks": 0,
+      "fake_count": 0,
+      "true_count": 0,
+      "last_updated": "2026-02-05T15:57:49.959795",
+      "category": "trusted"
+    },
+    "indianexpress.com": {
+      "score": 83,
+      "total_checks": 0,
+      "fake_count": 0,
+      "true_count": 0,
+      "last_updated": "2026-02-05T15:57:49.959798",
+      "category": "trusted"
+    },
+    "hindustantimes.com": {
+      "score": 80,
+      "total_checks": 0,
+      "fake_count": 0,
+      "true_count": 0,
+      "last_updated": "2026-02-05T15:57:49.959801",
+      "category": "trusted"
+    },
+    "livemint.com": {
+      "score": 82,
+      "total_checks": 0,
+      "fake_count": 0,
+      "true_count": 0,
+      "last_updated": "2026-02-05T15:57:49.959806",
+      "category": "trusted"
+    },
+    "scroll.in": {
+      "score": 78,
+      "total_checks": 0,
+      "fake_count": 0,
+      "true_count": 0,
+      "last_updated": "2026-02-05T15:57:49.959809",
+      "category": "trusted"
+    },
+    "thewire.in": {
+      "score": 75,
+      "total_checks": 0,
+      "fake_count": 0,
+      "true_count": 0,
+      "last_updated": "2026-02-05T15:57:49.959812",
+      "category": "trusted"
+    },
+    "cnn.com": {
+      "score": 78,
+      "total_checks": 0,
+      "fake_count": 0,
+      "true_count": 0,
+      "last_updated": "2026-02-05T15:57:49.959816",
+      "category": "trusted"
+    },
+    "washingtonpost.com": {
+      "score": 85,
+      "total_checks": 0,
+      "fake_count": 0,
+      "true_count": 0,
+      "last_updated": "2026-02-05T15:57:49.959819",
+      "category": "trusted"
+    },
+    "usatoday.com": {
+      "score": 80,
+      "total_checks": 0,
+      "fake_count": 0,
+      "true_count": 0,
+      "last_updated": "2026-02-05T15:57:49.959822",
+      "category": "trusted"
+    },
+    "time.com": {
+      "score": 82,
+      "total_checks": 0,
+      "fake_count": 0,
+      "true_count": 0,
+      "last_updated": "2026-02-05T15:57:49.959825",
+      "category": "trusted"
+    },
+    "cnbc.com": {
+      "score": 82,
+      "total_checks": 0,
+      "fake_count": 0,
+      "true_count": 0,
+      "last_updated": "2026-02-05T15:57:49.959832",
+      "category": "trusted"
+    },
+    "dw.com": {
+      "score": 85,
+      "total_checks": 0,
+      "fake_count": 0,
+      "true_count": 0,
+      "last_updated": "2026-02-05T15:57:49.959836",
+      "category": "trusted"
+    },
+    "france24.com": {
+      "score": 83,
+      "total_checks": 0,
+      "fake_count": 0,
+      "true_count": 0,
+      "last_updated": "2026-02-05T15:57:49.959839",
+      "category": "trusted"
+    },
+    "infowars.com": {
+      "score": 10,
+      "total_checks": 0,
+      "fake_count": 0,
+      "true_count": 0,
+      "last_updated": "2026-02-05T15:57:49.959849",
+      "category": "unreliable"
+    },
+    "naturalnews.com": {
+      "score": 15,
+      "total_checks": 0,
+      "fake_count": 0,
+      "true_count": 0,
+      "last_updated": "2026-02-05T15:57:49.959856",
+      "category": "unreliable"
+    },
+    "beforeitsnews.com": {
+      "score": 10,
+      "total_checks": 0,
+      "fake_count": 0,
+      "true_count": 0,
+      "last_updated": "2026-02-05T15:57:49.959861",
+      "category": "unreliable"
+    },
+    "worldnewsdailyreport.com": {
+      "score": 5,
+      "total_checks": 0,
+      "fake_count": 0,
+      "true_count": 0,
+      "last_updated": "2026-02-05T15:57:49.959864",
+      "category": "unreliable"
+    }
+  },
+  "last_updated": "2026-02-05T15:57:49.960835",
+  "total_sources": 40
+}

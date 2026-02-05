@@ -19,3 +19,4 @@ pystray>=0.19.5
 keyboard>=0.13.5
 pyperclip>=1.8.2
 win10toast-click>=0.1.2
+groq

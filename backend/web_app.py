@@ -5,7 +5,6 @@ Works 100% reliably (no Windows API issues)
 from flask import Flask, render_template_string, request, jsonify
 from news_analyzer import NewsAnalyzer
 from openai_service import OpenAIAnalyzer
-from image_analyzer import ImageAnalyzer
 from config import Config
 import webbrowser
 import threading
@@ -17,413 +16,588 @@ app = Flask(__name__)
 Config.validate()
 news = NewsAnalyzer()
 ai = OpenAIAnalyzer()
-image_analyzer = ImageAnalyzer()
 
 HTML = """
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Veritas - Fake News Detector</title>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Veritas - AI Truth Detector</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --bg-color: #0b0e14;
+            --card-bg: #14181f;
+            --text-primary: #ffffff;
+            --text-secondary: #8b949e;
+            --accent-purple: #8b5cf6;
+            --accent-gradient: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
+            --success: #3fb950;
+            --danger: #f85149;
+            --warning: #d29922;
+            --toggle-bg: #21262d;
+            --toggle-hover: #30363d;
+            --input-bg: #0d1117;
+            --input-border: #30363d;
+        }
+
+        body.light-theme {
+            --bg-color: #f6f8fa;
+            --card-bg: #ffffff;
+            --text-primary: #1f2328;
+            --text-secondary: #636c76;
+            --accent-purple: #8b5cf6;
+            --accent-gradient: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
+            --success: #1a7f37;
+            --danger: #d1242f;
+            --warning: #9a6700;
+            --toggle-bg: #ebeff2;
+            --toggle-hover: #d0d7de;
+            --input-bg: #ffffff;
+            --input-border: #d0d7de;
+        }
+
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        
+
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #0a0e14 0%, #14181f 100%);
-            color: #e6edf3;
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
             min-height: 100vh;
+            display: flex;
+            justify-content: center;
             padding: 20px;
         }
-        
+
         .container {
-            max-width: 900px;
-            margin: 0 auto;
-        }
-        
-        header {
-            text-align: center;
-            padding: 40px 20px;
-        }
-        
-        h1 {
-            font-size: 3em;
-            background: linear-gradient(135deg, #3fb950, #58a6ff);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            margin-bottom: 10px;
-        }
-        
-        .tagline {
-            color: #8b949e;
-            font-size: 1.1em;
-        }
-        
-        .input-card {
-            background: #14181f;
-            border-radius: 12px;
-            padding: 30px;
-            margin: 30px 0;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-        }
-        
-        textarea {
             width: 100%;
-            min-height: 120px;
-            background: #1a1f29;
-            border: 2px solid #21262f;
-            border-radius: 8px;
-            color: #e6edf3;
-            font-size: 16px;
-            padding: 15px;
-            resize: vertical;
-            font-family: inherit;
+            max-width: 450px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
         }
-        
-        textarea:focus {
-            outline: none;
-            border-color: #58a6ff;
-        }
-        
-        button {
-            background: linear-gradient(135deg, #3fb950, #2ea043);
-            color: white;
-            border: none;
-            padding: 15px 40px;
-            font-size: 1.1em;
-            border-radius: 8px;
-            cursor: pointer;
-            margin-top: 20px;
-            font-weight: bold;
-            transition: transform 0.2s;
-        }
-        
-        button:hover {
-            transform: translateY(-2px);
-        }
-        
-        button:disabled {
-            background: #555;
-            cursor: not-allowed;
-        }
-        
-        #loading {
-            display: none;
-            text-align: center;
-            padding: 20px;
-            color: #58a6ff;
-        }
-        
-        .result-card {
-            background: #14181f;
-            border-radius: 12px;
-            padding: 30px;
-            margin: 30px 0;
-            display: none;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-        }
-        
-        .verdict-banner {
-            padding: 25px;
-            border-radius: 10px;
-            margin-bottom: 25px;
+
+        /* Header */
+        header {
             display: flex;
             justify-content: space-between;
             align-items: center;
+            padding: 10px 0;
         }
         
-        .verdict-banner.fake {
-            background: linear-gradient(135deg, #f85149, #da3b34);
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-icon {
+            font-size: 28px;
+            color: #6366f1;
+            background: rgba(99, 102, 241, 0.1);
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .app-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .app-name {
+            font-size: 20px;
+            font-weight: 700;
+            background: linear-gradient(90deg, #8b5cf6, #6366f1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
         
-        .verdict-banner.real {
-            background: linear-gradient(135deg, #3fb950, #2ea043);
-        }
-        
-        .verdict-banner.uncertain {
-            background: linear-gradient(135deg, #d29922, #bf8700);
-        }
-        
-        .verdict-text {
-            font-size: 2em;
-            font-weight: bold;
-        }
-        
-        .confidence {
-            font-size: 1.5em;
-            font-weight: bold;
-        }
-        
-        .section {
-            background: #1a1f29;
-            padding: 20px;
-            border-radius: 8px;
-            margin: 15px 0;
-        }
-        
-        .section-title {
-            color: #58a6ff;
-            font-weight: bold;
-            margin-bottom: 10px;
-            font-size: 0.9em;
+        .app-desc {
+            font-size: 11px;
+            color: #4b5563;
             text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
-        
-        .source {
-            background: #14181f;
-            padding: 15px;
-            margin: 8px 0;
-            border-radius: 6px;
-            border-left: 3px solid #58a6ff;
+
+        .theme-toggle {
+            color: var(--text-secondary);
             cursor: pointer;
-            transition: all 0.2s;
+            width: 36px;
+            height: 36px;
+            background: var(--toggle-bg); 
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: 0.2s;
+        }
+
+        .theme-toggle:hover {
+            background: var(--toggle-hover);
+            color: var(--text-primary);
+        }
+
+        /* Status Bar */
+        .status-bar {
+            background: var(--card-bg);
+            padding: 16px 24px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 14px;
+            color: var(--text-secondary);
+            border: 1px solid rgba(48, 54, 61, 0.5);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            background-color: var(--success);
+            border-radius: 50%;
+            box-shadow: 0 0 10px rgba(63, 185, 80, 0.4);
+        }
+
+        /* Main Action Button */
+        .analyze-btn {
+            background: var(--accent-gradient);
+            color: white;
+            border: none;
+            border-radius: 16px;
+            padding: 18px;
+            font-size: 16px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            cursor: pointer;
+            transition: box-shadow 0.2s, transform 0.2s;
+            box-shadow: 0 8px 20px rgba(99, 102, 241, 0.25);
+            width: 100%;
+        }
+
+        .analyze-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 25px rgba(99, 102, 241, 0.35);
         }
         
-        .source:hover {
-            background: #1a1f29;
-            transform: translateX(5px);
+        .analyze-btn:active {
+            transform: translateY(0);
+        }
+
+        /* Cards */
+        .result-card {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 24px;
+            border: 1px solid rgba(48, 54, 61, 0.5);
+            margin-bottom: 20px;
+            display: none; /* Hidden by default */
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .card-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+
+        .icon-fake { background: rgba(248, 81, 73, 0.1); color: var(--danger); }
+        .icon-real { background: rgba(63, 185, 80, 0.1); color: var(--success); }
+        .icon-uncertain { background: rgba(210, 153, 34, 0.1); color: var(--warning); }
+
+        .card-title-group {
+            flex: 1;
+        }
+
+        .card-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: #ffffff;
+            margin-bottom: 4px;
+        }
+
+        .verdict-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 8px;
+            font-size: 11px;
+            font-weight: 700;
+            background: rgba(248, 81, 73, 0.15);
+            color: var(--danger);
         }
         
-        .feedback {
+        .badge-real { background: rgba(63, 185, 80, 0.15); color: var(--success); }
+        .badge-uncertain { background: rgba(210, 153, 34, 0.15); color: var(--warning); }
+
+        /* Progress Bar */
+        .progress-container {
+            margin: 10px 0 24px 0;
+        }
+        
+        .progress-track {
+            height: 8px;
+            background: #21262d;
+            border-radius: 4px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .progress-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin-top: 8px;
+            font-weight: 500;
+        }
+
+        .progress-value-overlay {
+            color: white;
+            font-weight: 700;
             text-align: center;
-            margin-top: 25px;
-            padding-top: 25px;
-            border-top: 1px solid #21262f;
+            margin-top: 5px;
+            font-size: 12px;
+        }
+
+         /* Metrics */
+        .metrics-grid {
+            border-top: 1px solid #21262d;
+            padding-top: 20px;
+            display: grid;
+            gap: 12px;
+        }
+
+        .metric-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 13px;
+        }
+
+        .metric-label {
+            color: var(--text-secondary);
         }
         
-        .feedback-btn {
-            background: #1a1f29;
-            padding: 10px 25px;
-            margin: 0 10px;
-            font-size: 1em;
+        .metric-value {
+            font-weight: 600;
         }
-        
-        .feedback-btn.yes:hover {
-            background: #3fb950;
+
+        .val-danger { color: var(--danger); }
+        .val-success { color: var(--success); }
+        .val-warning { color: var(--warning); }
+        .val-neutral { color: var(--text-primary); }
+
+        /* Input Card */
+        .input-card {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 20px;
+            border: 1px solid rgba(48, 54, 61, 0.5);
+            margin-bottom: 20px;
         }
-        
-        .feedback-btn.no:hover {
-            background: #f85149;
+
+        .input-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #21262d;
         }
-        
+
         .tab-btn {
             background: transparent;
-            border: 1px solid #30363d;
-            padding: 10px 20px;
-            color: #8b949e;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 13px;
+            font-weight: 600;
             cursor: pointer;
-            border-radius: 6px;
-            margin: 0;
-            font-size: 1em;
+            padding: 6px 12px;
+            border-radius: 8px;
+            transition: 0.2s;
+        }
+
+        .tab-btn.active {
+            background: rgba(99, 102, 241, 0.1);
+            color: #6366f1;
+        }
+
+        textarea {
+            width: 100%;
+            background: var(--input-bg);
+            border: 1px solid var(--input-border);
+            border-radius: 12px;
+            color: var(--text-primary);
+            padding: 12px;
+            min-height: 100px;
+            font-family: inherit;
+            resize: vertical;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #6366f1;
         }
         
-        .tab-btn.active {
-            background: #1f6feb;
-            color: white;
-            border-color: #1f6feb;
+        /* Dropzone */
+        .drop-zone {
+            border: 2px dashed #30363d;
+            border-radius: 12px;
+            padding: 30px;
+            text-align: center;
+            cursor: pointer;
+            transition: 0.2s;
         }
+        
+        .drop-zone:hover {
+            border-color: #6366f1;
+            background: rgba(99, 102, 241, 0.05);
+        }
+
+        .hidden { display: none !important; }
+        
+        /* Loading */
+        .loading-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: var(--bg-color);
+            opacity: 0.9;
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(99, 102, 241, 0.3);
+            border-top-color: #6366f1;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin { to { transform: rotate(360deg); } }
+
     </style>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>🛡️ Veritas</h1>
-            <p class="tagline">AI-Powered Fake News Detection</p>
-        </header>
-        
-        <div class="input-card">
-            <div style="display: flex; gap: 10px; margin-bottom: 15px;">
-                <button onclick="showTab('text')" id="btn-text" class="tab-btn active">Text Analysis</button>
-                <button onclick="showTab('image')" id="btn-image" class="tab-btn">Image Analysis</button>
-            </div>
 
-            <div id="tab-text">
-                <textarea id="claim" placeholder="Paste news headline or claim here..."></textarea>
-                <button onclick="analyze()">Analyze Text</button>
+<div class="container">
+    <header>
+        <div class="logo-section">
+            <div class="logo-icon">
+                <i class="fas fa-shield-alt"></i>
             </div>
-            
-            <div id="tab-image" style="display: none; text-align: center;">
-                <input type="file" id="imageInput" accept="image/*" style="display: none;" onchange="handleImageSelect(this)">
-                <div id="dropZone" onclick="document.getElementById('imageInput').click()" 
-                     style="border: 2px dashed #30363d; border-radius: 8px; padding: 40px; cursor: pointer; transition: all 0.2s;">
-                    <p style="font-size: 1.2em; margin-bottom: 10px;">📸 Drop image here or click to upload</p>
-                    <p style="color: #8b949e; font-size: 0.9em;">Supports deepfake detection & text verification</p>
-                    <img id="imagePreview" style="max-width: 100%; max-height: 300px; margin-top: 20px; border-radius: 8px; display: none;">
-                </div>
-                <button onclick="analyzeImage()" style="margin-top: 20px;">Analyze Image</button>
+            <div class="app-info">
+                <span class="app-name">Veritas</span>
+                <span class="app-desc">AI-Powered Truth Detector</span>
             </div>
         </div>
-        
-        <div id="loading">
-            <h2>🔍 Analyzing...</h2>
-            <p>Searching sources and analyzing content...</p>
+        <div class="theme-toggle" onclick="toggleTheme()">
+            <i class="fas fa-moon" id="theme-icon"></i>
         </div>
-        
-        <div id="result" class="result-card"></div>
+    </header>
+
+    <div class="status-bar">
+        <div class="status-dot"></div>
+        <span>Analysis complete</span>
     </div>
-    
-    <script>
-        function showTab(tab) {
-            document.getElementById('tab-text').style.display = tab === 'text' ? 'block' : 'none';
-            document.getElementById('tab-image').style.display = tab === 'image' ? 'block' : 'none';
-            document.getElementById('btn-text').classList.toggle('active', tab === 'text');
-            document.getElementById('btn-image').classList.toggle('active', tab === 'image');
-            document.getElementById('result').style.display = 'none';
-        }
 
-        function handleImageSelect(input) {
-            if (input.files && input.files[0]) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const img = document.getElementById('imagePreview');
-                    img.src = e.target.result;
-                    img.style.display = 'block';
-                    document.getElementById('dropZone').style.borderColor = '#58a6ff';
-                };
-                reader.readAsDataURL(input.files[0]);
-            }
-        }
+    <!-- Input Section -->
+    <div class="input-card" id="input-section">
+        <div id="tab-text">
+            <textarea id="claim-input" placeholder="Paste text or URL to analyze..."></textarea>
+        </div>
+    </div>
 
-        async function analyzeImage() {
-            const input = document.getElementById('imageInput');
-            if (!input.files || !input.files[0]) {
-                alert('Please select an image first');
-                return;
-            }
-            
-            const reader = new FileReader();
-            reader.readAsDataURL(input.files[0]);
-            reader.onload = async function() {
-                const base64Image = reader.result;
-                
-                document.getElementById('loading').style.display = 'block';
-                document.getElementById('result').style.display = 'none';
-                
-                try {
-                    const response = await fetch('/analyze-image', {
-                        method: 'POST',
-                        headers: {'Content-Type': 'application/json'},
-                        body: JSON.stringify({image: base64Image})
-                    });
-                    
-                    const data = await response.json();
-                    displayResult({
-                        verdict: data.verdict,
-                        confidence: data.confidence,
-                        reasoning: data.reason,
-                        claim: "Image Analysis",
-                        sources: [],
-                        isImage: true,
-                        extractedText: data.extracted_text
-                    });
-                } catch (error) {
-                    alert('Error: ' + error.message);
-                } finally {
-                    document.getElementById('loading').style.display = 'none';
-                }
-            };
-        }
+    <button class="analyze-btn" onclick="runAnalysis()">
+        <i class="fas fa-search"></i>
+        Analyze Current Page
+    </button>
 
-        async function analyze() {
-            const claim = document.getElementById('claim').value.trim();
-            if (!claim) {
-                alert('Please enter a claim to analyze');
-                return;
-            }
-            
-            document.getElementById('loading').style.display = 'block';
-            document.getElementById('result').style.display = 'none';
-            
-            try {
-                const response = await fetch('/analyze', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({claim: claim})
-                });
-                
-                const data = await response.json();
-                displayResult(data);
-            } catch (error) {
-                alert('Error: ' + error.message);
-            } finally {
-                document.getElementById('loading').style.display = 'none';
-            }
-        }
+    <!-- Card 1: Fake News Detection -->
+    <div id="card-news" class="result-card">
+        <div class="card-header">
+            <div class="card-icon icon-fake" id="news-icon">
+                <i class="fas fa-exclamation-circle"></i>
+            </div>
+            <div class="card-title-group">
+                <div class="card-title">Fake News Detection</div>
+                <div class="verdict-badge" id="news-badge">Likely Fake</div>
+            </div>
+        </div>
+
+        <div class="progress-container">
+            <div class="progress-track">
+                <div class="progress-fill" id="news-progress" style="width: 0%; background: var(--danger);"></div>
+            </div>
+            <div class="progress-labels">
+                <span>Likely Real</span>
+                <span id="news-percent">98%</span>
+                <span>Likely Fake</span>
+            </div>
+        </div>
+
+        <div class="metrics-grid">
+            <div class="metric-row">
+                <span class="metric-label">Source Credibility:</span>
+                <span class="metric-value val-danger" id="news-source">Satire/Parody</span>
+            </div>
+            <div class="metric-row">
+                <span class="metric-label">Sensationalism:</span>
+                <span class="metric-value val-success" id="news-sensation">Low</span>
+            </div>
+             <div class="metric-row">
+                <span class="metric-label">Fact Check:</span>
+                <span class="metric-value val-success" id="news-factcheck">Likely Accurate</span>
+            </div>
+        </div>
+    </div>
+
+
+</div>
+
+<div id="loading" class="loading-overlay hidden">
+    <div class="spinner"></div>
+    <div style="color: white; font-weight: 600;">Analyzing...</div>
+</div>
+
+<script>
+    async function runAnalysis() {
+        const loading = document.getElementById('loading');
+        const newsCard = document.getElementById('card-news');
         
-        function displayResult(data) {
-            const resultDiv = document.getElementById('result');
+        loading.classList.remove('hidden');
+        newsCard.style.display = 'none';
+
+        try {
+            const text = document.getElementById('claim-input').value;
+            if (!text) throw new Error("Please enter text");
             
-            let verdictClass = 'uncertain';
-            const v = data.verdict.toUpperCase();
-            if (v.includes('FAKE') || v.includes('AI GENERATED') || v.includes('SATIRE')) {
-                verdictClass = 'fake';
-            } else if (v.includes('REAL') || v.includes('AUTHENTIC')) {
-                verdictClass = 'real';
-            }
-            
-            let sourcesHTML = '';
-            if (data.sources && data.sources.length > 0) {
-                sourcesHTML = '<div class="section"><div class="section-title">Sources (' + data.sources.length + ')</div>';
-                data.sources.forEach(src => {
-                    sourcesHTML += `<div class="source" onclick="window.open('${src.url}', '_blank')">
-                        <div>📰 ${src.title}</div>
-                    </div>`;
-                });
-                sourcesHTML += '</div>';
-            }
-            
-            let extraHTML = '';
-            if (data.extractedText && data.extractedText.length > 10) {
-                extraHTML = `<div class="section">
-                    <div class="section-title">OCR Extracted Text</div>
-                    <div style="font-style: italic; color: #aaa;">"${data.extractedText}"</div>
-                </div>`;
-            }
-            
-            resultDiv.innerHTML = `
-                <div class="verdict-banner ${verdictClass}">
-                    <div class="verdict-text">${data.verdict}</div>
-                    <div class="confidence">${data.confidence}%</div>
-                </div>
-                
-                <div class="section">
-                    <div class="section-title">Target</div>
-                    <div>${data.claim}</div>
-                </div>
-                
-                <div class="section">
-                    <div class="section-title">Analysis</div>
-                    <div>${data.reasoning}</div>
-                </div>
-                
-                ${extraHTML}
-                ${sourcesHTML}
-                
-                <div class="feedback">
-                    <p style="color: #8b949e; margin-bottom: 15px;">Was this analysis helpful?</p>
-                    <button class="feedback-btn yes" onclick="feedback('yes')">✓ Yes</button>
-                    <button class="feedback-btn no" onclick="feedback('no')">✗ No</button>
-                </div>
-            `;
-            
-            resultDiv.style.display = 'block';
-            resultDiv.scrollIntoView({behavior: 'smooth'});
-        }
-        
-        function feedback(type) {
-            alert('Thank you for your feedback: ' + type);
-        }
-        
-        // Allow Enter to submit
-        document.addEventListener('DOMContentLoaded', () => {
-            document.getElementById('claim').addEventListener('keydown', (e) => {
-                if (e.key === 'Enter' && e.ctrlKey) {
-                    analyze();
-                }
+            const res = await fetch('/analyze', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({claim: text})
             });
-        });
-    </script>
+            const data = await res.json();
+            renderTextResult(data);
+        } catch (e) {
+            alert(e.message);
+        } finally {
+            loading.classList.add('hidden');
+        }
+    }
+
+    function renderTextResult(data) {
+        // Show Fake News Card
+        const card = document.getElementById('card-news');
+        const badge = document.getElementById('news-badge');
+        const progress = document.getElementById('news-progress');
+        const icon = document.getElementById('news-icon');
+        
+        // Map Verdict
+        const v = data.verdict.toUpperCase();
+        let color = 'var(--warning)';
+        let w = '50%';
+        let badgeText = 'Uncertain';
+        let bgClass = 'badge-uncertain';
+        let iconClass = 'icon-uncertain';
+        
+        const confidence = data.confidence || 50;
+        
+        if (v.includes('FAKE') || v.includes('SATIRE')) {
+            color = 'var(--danger)';
+            w = `${confidence}%`;
+            progress.style.marginLeft = 'auto'; // Fill from right (towards center)
+            progress.style.marginRight = '0';
+            badgeText = 'Likely Fake';
+            bgClass = 'verdict-badge'; 
+            iconClass = 'icon-fake';
+        } else if (v.includes('REAL')) {
+            color = 'var(--success)';
+            w = `${confidence}%`;
+            progress.style.marginLeft = '0'; // Fill from left (towards center)
+            progress.style.marginRight = 'auto';
+            badgeText = 'Likely Real';
+            bgClass = 'badge-real';
+            iconClass = 'icon-real';
+        }
+
+        badge.className = `verdict-badge ${bgClass}`;
+        badge.innerText = badgeText;
+        progress.style.background = color;
+        progress.style.width = w;
+        icon.className = `card-icon ${iconClass}`;
+        
+        document.getElementById('news-percent').innerText = `${data.confidence}%`;
+
+        // Update Metrics
+        document.getElementById('news-source').innerText = data.sources.length + ' Sources';
+        document.getElementById('news-source').className = 'metric-value val-neutral';
+        
+        document.getElementById('news-factcheck').innerText = data.verdict;
+        document.getElementById('news-factcheck').style.color = color;
+        
+        card.style.display = 'block';
+    }
+
+    function toggleTheme() {
+        const body = document.body;
+        const icon = document.getElementById('theme-icon');
+        
+        body.classList.toggle('light-theme');
+        const isLight = body.classList.contains('light-theme');
+        
+        icon.className = isLight ? 'fas fa-sun' : 'fas fa-moon';
+        localStorage.setItem('theme', isLight ? 'light' : 'dark');
+    }
+
+    // Load saved theme
+    (function() {
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme === 'light') {
+            document.body.classList.add('light-theme');
+            document.getElementById('theme-icon').className = 'fas fa-sun';
+        }
+    })();
+
+</script>
+
 </body>
 </html>
 """
@@ -512,17 +686,6 @@ def open_browser():
     time.sleep(1.5)
     webbrowser.open('http://127.0.0.1:5000')
 
-@app.route('/analyze-image', methods=['POST'])
-def analyze_image():
-    data = request.json
-    image_base64 = data.get('image', '')
-    
-    if not image_base64:
-        return jsonify({"error": "No image provided"}), 400
-        
-    print("\nAnalyzing Image...")
-    result = image_analyzer.analyze_image(image_base64, openai_analyzer=ai)
-    return jsonify(result)
 
 if __name__ == '__main__':
     print("\n" + "="*60)

@@ -43,3 +43,7 @@ Thumbs.db
 model/
 *.bin
 *.ckpt
+
+# Local Data
+news.csv
+feedback.json

@@ -76,8 +76,11 @@ Respond ONLY with valid JSON:
             print(f"Raw content: {content}")
             return {"error": "JSON parse error", "raw": content, "source": "OpenAI"}
         except Exception as e:
-            print(f"OpenAI text analysis error: {e}")
-            traceback.print_exc()
+            if "429" in str(e) or "insufficient_quota" in str(e):
+                print(f"OpenAI: Quota exceeded (429).")
+            else:
+                print(f"OpenAI text analysis error: {e}")
+                traceback.print_exc()
             return None
     
     def analyze_image(self, image_base64):

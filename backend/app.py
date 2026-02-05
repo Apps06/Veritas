@@ -4,10 +4,10 @@ from flask_cors import CORS
 from config import Config
 from news_analyzer import NewsAnalyzer
 from feedback_manager import FeedbackManager
-from image_analyzer import ImageAnalyzer
+from news_analyzer import NewsAnalyzer
+from feedback_manager import FeedbackManager
 from openai_service import OpenAIAnalyzer
 from scira_service import SciraService
-from fakebuster_service import FakebusterService
 from staged_analyzer import StagedAnalyzer
 
 app = Flask(__name__)
@@ -22,10 +22,8 @@ Config.validate()
 # Initialize Services
 news_analyzer = NewsAnalyzer()
 feedback_manager = FeedbackManager()
-image_analyzer = ImageAnalyzer()
 openai_analyzer = OpenAIAnalyzer()
 scira_service = SciraService()
-fakebuster = FakebusterService()  # CNN-LSTM fallback model
 
 # Initialize 3-Stage Analyzer
 staged_analyzer = StagedAnalyzer(
@@ -168,23 +166,7 @@ def analyze():
             verdict = "Uncertain"
             color = "#f39c12"
     
-    # 3. Fakebuster CNN-LSTM Fallback (when OpenAI unavailable)
-    elif fakebuster.has_model:
-        fb_result = fakebuster.predict(text)
-        if fb_result:
-            fb_label = fb_result.get("label", "")
-            confidence = fb_result.get("confidence", 50)
-            
-            if fb_label == "True":
-                verdict = "Likely Real"
-                color = "#2ecc71"
-                reason = f"Fakebuster CNN-LSTM: Classified as credible ({confidence}% confidence)"
-            else:
-                verdict = "Likely Fake"
-                color = "#e74c3c"
-                reason = f"Fakebuster CNN-LSTM: Detected misinformation patterns ({confidence}% confidence)"
-    
-    # 4. Last Resort: If we have sources but no AI analysis
+    # 3. Last Resort: If we have sources but no AI analysis
     elif realtime_data and realtime_data.get("total_sources", 0) > 0:
         verdict = "Sources Found - Review Needed"
         confidence = 40
@@ -209,124 +191,6 @@ def analyze():
     })
 
 
-@app.route("/analyze-image", methods=["POST"])
-def analyze_image_endpoint():
-    """
-    Comprehensive image analysis:
-    1. Deepfake/AI detection (OpenAI + Local models)
-    2. OCR text extraction
-    3. Fake news verification of extracted text
-    """
-    data = request.json
-    image_base64 = data.get("image")
-    
-    if not image_base64:
-        return jsonify({"error": "No image data provided"})
-    
-    # Run analyses CONCURRENTLY
-    openai_result = None
-    local_result = None
-    text_analysis = None
-    
-    print(f"Image analysis starting: OpenAI={openai_analyzer.has_openai}, LocalDetector={image_analyzer.has_detector}")
-    
-    with ThreadPoolExecutor(max_workers=3) as executor:
-        futures = {}
-        
-        # Submit OpenAI Vision analysis
-        if openai_analyzer.has_openai:
-            futures['openai'] = executor.submit(openai_analyzer.analyze_image, image_base64)
-        
-        # Submit local model analysis (includes OCR)
-        if image_analyzer.has_detector:
-            futures['local'] = executor.submit(image_analyzer.analyze_image, image_base64)
-        
-        # Collect results with timeout
-        for key, future in futures.items():
-            try:
-                result = future.result(timeout=30)  # Longer timeout for OCR
-                if key == 'openai':
-                    openai_result = result
-                elif key == 'local':
-                    local_result = result
-            except Exception as e:
-                print(f"Image analysis {key} failed or timed out: {e}")
-    
-    # Check if we extracted text from the image
-    extracted_text = ""
-    if local_result and local_result.get("extracted_text"):
-        extracted_text = local_result.get("extracted_text", "")
-        
-        # If significant text found, verify it for fake news
-        if len(extracted_text) > 20:
-            print(f"Running fake news check on extracted text: '{extracted_text[:50]}...'")
-            try:
-                # Run BERT + Realtime analysis on extracted text
-                bert_result = pipe(extracted_text[:512])[0]
-                realtime_result = news_analyzer.analyze_news(extracted_text)
-                
-                text_analysis = {
-                    "extracted_text": extracted_text,
-                    "bert_label": bert_result["label"],
-                    "bert_score": round(bert_result["score"] * 100, 2),
-                    "is_fake": bert_result["label"] == "LABEL_0",
-                    "realtime": realtime_result
-                }
-            except Exception as e:
-                print(f"Text analysis failed: {e}")
-                text_analysis = {"extracted_text": extracted_text, "error": str(e)}
-    
-    # Initialize with defaults
-    verdict = "Uncertain"
-    confidence = 50
-    reason = "Analysis could not be completed"
-    color = "#f39c12"
-    
-    # Combine results
-    openai_valid = openai_result and isinstance(openai_result, dict) and not openai_result.get("error") and openai_result.get("verdict")
-    local_valid = local_result and isinstance(local_result, dict) and not local_result.get("error") and local_result.get("verdict")
-    
-    # Determine image verdict (deepfake detection)
-    if openai_valid:
-        verdict = openai_result.get("verdict", "Uncertain")
-        confidence = openai_result.get("confidence", 50)
-        reason = openai_result.get("reasoning", "GPT-4 Vision analysis")
-        color = "#e74c3c" if "AI" in verdict or "Manipulated" in verdict else "#2ecc71"
-        if verdict == "Uncertain":
-            color = "#f39c12"
-    elif local_valid:
-        verdict = local_result.get("verdict", "Uncertain")
-        confidence = local_result.get("confidence", 50)
-        reason = local_result.get("reason", "Local model analysis")
-        color = local_result.get("color", "#f39c12")
-    
-    # If text was found, add text verification to the verdict
-    if text_analysis and not text_analysis.get("error"):
-        if text_analysis.get("is_fake"):
-            # Text in image is likely fake news
-            reason += f" | ⚠️ TEXT IN IMAGE: Likely Fake News ({text_analysis['bert_score']}% confidence)"
-            if "Authentic" in verdict or "Real" in verdict:
-                verdict = "Contains Fake News Text"
-                color = "#e74c3c"
-        else:
-            # Text appears credible
-            if text_analysis.get("realtime", {}).get("credibility_score", 0) > 60:
-                reason += f" | ✓ Text verified by {text_analysis['realtime'].get('matching_reputable_sources', 0)} sources"
-    
-    stats = feedback_manager.get_stats()
-    
-    print(f"Final image verdict: {verdict}, confidence: {confidence}")
-    
-    return jsonify({
-        "verdict": verdict,
-        "confidence": confidence,
-        "color": color,
-        "reason": reason,
-        "ai_analysis": openai_result,
-        "local_analysis": local_result,
-        "text_analysis": text_analysis,  # NEW: OCR + fake news verification
-        "community_accuracy": stats["accuracy"]
-    })
 
 
 @app.route("/report", methods=["POST"])
@@ -360,13 +224,12 @@ def health_check():
         "parallel_available": news_analyzer.has_parallel,
         "twitter_available": news_analyzer.has_twitter,
         "reddit_available": news_analyzer.has_reddit,
-        "image_detector_available": image_analyzer.has_detector,
         "bert_loaded": True
     })
 
 
 if __name__ == "__main__":
     print("="*50)
-    print("Server ready at http://127.0.0.1:5000")
+    print("Server ready at http://127.0.0.1:5001")
     print("="*50 + "\n")
-    app.run(port=5000, debug=True)
+    app.run(port=5001, debug=True)

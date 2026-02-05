@@ -25,6 +25,7 @@ class Config:
     # Other APIs
     SCIRA_API_KEY = os.getenv("SCIRA_API_KEY")
     OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+    GROQ_API_KEY = os.getenv("GROQ_API_KEY")
     
     @staticmethod
     def validate():
@@ -51,6 +52,11 @@ class Config:
         
         if missing_optional:
             print(f"ℹ️  Optional keys not set: {', '.join(missing_optional)}")
+        
+        if Config.GROQ_API_KEY and "your_" not in Config.GROQ_API_KEY:
+            print("✓ Groq API key loaded (Fallback)")
+        else:
+            print("ℹ️  Groq API key not set (no fallback AI available)")
         
         if not missing_keys:
             print("✓ Required API keys loaded successfully")
