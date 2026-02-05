@@ -194,7 +194,11 @@ function analyzeSourceCredibility(url) {
         'reuters.com', 'apnews.com', 'bbc.com', 'bbc.co.uk',
         'nytimes.com', 'washingtonpost.com', 'theguardian.com',
         'npr.org', 'economist.com', 'wsj.com', 'ft.com',
-        'cnn.com', 'abcnews.go.com', 'nbcnews.com', 'cbsnews.com'
+        'cnn.com', 'abcnews.go.com', 'nbcnews.com', 'cbsnews.com',
+        // Indian news sources
+        'timesnownews.com', 'ndtv.com', 'indiatoday.in', 'thehindu.com',
+        'hindustantimes.com', 'indianexpress.com', 'news18.com',
+        'zeenews.india.com', 'aajtak.in', 'theprint.in', 'scroll.in'
     ];
 
     // Known questionable sources
