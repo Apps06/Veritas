@@ -1,0 +1,60 @@
+/* Veritas Content Script Styles */
+/* Injected into web pages */
+
+/* Floating indicator styles are in content.js */
+
+/* Additional page-level styles */
+.fakebuster-analyzed {
+    /* Mark that page has been analyzed */
+}
+
+.fakebuster-highlight-fake {
+    background: rgba(239, 68, 68, 0.1) !important;
+    border-left: 3px solid #ef4444 !important;
+    padding-left: 10px !important;
+}
+
+.fakebuster-highlight-suspicious {
+    background: rgba(245, 158, 11, 0.1) !important;
+    border-left: 3px solid #f59e0b !important;
+    padding-left: 10px !important;
+}
+
+.fakebuster-highlight-verified {
+    background: rgba(16, 185, 129, 0.1) !important;
+    border-left: 3px solid #10b981 !important;
+    padding-left: 10px !important;
+}
+
+/* Image overlay for deepfake detection */
+.fakebuster-image-analyzed {
+    position: relative;
+}
+
+.fakebuster-image-badge {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 600;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    z-index: 1000;
+    pointer-events: none;
+}
+
+.fakebuster-image-badge.safe {
+    background: rgba(16, 185, 129, 0.9);
+    color: white;
+}
+
+.fakebuster-image-badge.warning {
+    background: rgba(245, 158, 11, 0.9);
+    color: white;
+}
+
+.fakebuster-image-badge.danger {
+    background: rgba(239, 68, 68, 0.9);
+    color: white;
+}

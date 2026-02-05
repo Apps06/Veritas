@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Veritas - Analysis History</title>
+    <style>
+        :root {
+            --bg-primary: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --bg-tertiary: #252542;
+            --border-glass: rgba(255, 255, 255, 0.1);
+            --text-primary: #ffffff;
+            --text-secondary: #a0a0b2;
+            --text-muted: #6b6b80;
+            --accent-primary: #6366f1;
+            --accent-secondary: #8b5cf6;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            padding: 40px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border-glass);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo svg {
+            width: 40px;
+            height: 40px;
+        }
+
+        h1 {
+            font-size: 24px;
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: var(--bg-tertiary);
+            color: var(--text-secondary);
+        }
+
+        .btn:hover {
+            background: #2d2d4a;
+            color: var(--text-primary);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-muted);
+        }
+
+        .empty-state svg {
+            width: 64px;
+            height: 64px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        .history-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .history-item {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-glass);
+            border-radius: 12px;
+            padding: 16px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            transition: all 0.2s;
+        }
+
+        .history-item:hover {
+            border-color: var(--accent-primary);
+        }
+
+        .risk-badge {
+            width: 50px;
+            height: 50px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+
+        .risk-badge.safe {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--success);
+        }
+
+        .risk-badge.warning {
+            background: rgba(245, 158, 11, 0.15);
+            color: var(--warning);
+        }
+
+        .risk-badge.danger {
+            background: rgba(239, 68, 68, 0.15);
+            color: var(--danger);
+        }
+
+        .item-content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .item-title {
+            font-weight: 600;
+            margin-bottom: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .item-url {
+            font-size: 12px;
+            color: var(--text-muted);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .item-meta {
+            display: flex;
+            gap: 16px;
+            margin-top: 8px;
+            font-size: 12px;
+        }
+
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            color: var(--text-secondary);
+        }
+
+        .item-date {
+            font-size: 12px;
+            color: var(--text-muted);
+            white-space: nowrap;
+        }
+
+        .feedback-badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 600;
+        }
+
+        .feedback-badge.accurate {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--success);
+        }
+
+        .feedback-badge.inaccurate {
+            background: rgba(239, 68, 68, 0.15);
+            color: var(--danger);
+        }
+
+        .filters {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .filter-btn {
+            padding: 8px 16px;
+            border: 1px solid var(--border-glass);
+            border-radius: 20px;
+            background: transparent;
+            color: var(--text-secondary);
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .filter-btn:hover,
+        .filter-btn.active {
+            background: var(--accent-primary);
+            border-color: var(--accent-primary);
+            color: white;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 2L3 7V12C3 17.55 6.84 22.74 12 24C17.16 22.74 21 17.55 21 12V7L12 2Z"
+                        fill="url(#gradient)" />
+                    <path d="M10 17L6 13L7.41 11.59L10 14.17L16.59 7.58L18 9L10 17Z" fill="white" />
+                    <defs>
+                        <linearGradient id="gradient" x1="3" y1="2" x2="21" y2="24">
+                            <stop offset="0%" stop-color="#6366f1" />
+                            <stop offset="100%" stop-color="#8b5cf6" />
+                        </linearGradient>
+                    </defs>
+                </svg>
+                <h1>Analysis History</h1>
+            </div>
+            <button class="btn" id="clearHistory">Clear History</button>
+        </header>
+
+        <div class="filters">
+            <button class="filter-btn active" data-filter="all">All</button>
+            <button class="filter-btn" data-filter="safe">Low Risk</button>
+            <button class="filter-btn" data-filter="warning">Medium Risk</button>
+            <button class="filter-btn" data-filter="danger">High Risk</button>
+        </div>
+
+        <div id="historyList" class="history-list">
+            <div class="empty-state">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10" />
+                    <polyline points="12,6 12,12 16,14" />
+                </svg>
+                <p>No analysis history yet</p>
+                <p style="font-size: 12px; margin-top: 8px;">Analyzed pages will appear here</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class HistoryPage {
+            constructor() {
+                this.history = [];
+                this.filter = 'all';
+                this.init();
+            }
+
+            async init() {
+                await this.loadHistory();
+                this.bindEvents();
+                this.render();
+            }
+
+            async loadHistory() {
+                const data = await chrome.storage.local.get(['feedbackData']);
+                if (data.feedbackData?.reports) {
+                    this.history = data.feedbackData.reports.reverse();
+                }
+            }
+
+            bindEvents() {
+                document.getElementById('clearHistory').addEventListener('click', () => {
+                    this.clearHistory();
+                });
+
+                document.querySelectorAll('.filter-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                        e.target.classList.add('active');
+                        this.filter = e.target.dataset.filter;
+                        this.render();
+                    });
+                });
+            }
+
+            getRiskClass(score) {
+                if (score < 30) return 'safe';
+                if (score < 60) return 'warning';
+                return 'danger';
+            }
+
+            formatDate(timestamp) {
+                const date = new Date(timestamp);
+                return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            }
+
+            render() {
+                const container = document.getElementById('historyList');
+
+                let filtered = this.history;
+                if (this.filter !== 'all') {
+                    filtered = this.history.filter(item => {
+                        const score = Math.max(item.results?.fakeNews?.score || 0, item.results?.deepfake?.score || 0);
+                        return this.getRiskClass(score) === this.filter;
+                    });
+                }
+
+                if (filtered.length === 0) {
+                    container.innerHTML = `
+            <div class="empty-state">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <polyline points="12,6 12,12 16,14"/>
+              </svg>
+              <p>No analysis history yet</p>
+              <p style="font-size: 12px; margin-top: 8px;">Analyzed pages will appear here</p>
+            </div>
+          `;
+                    return;
+                }
+
+                container.innerHTML = filtered.map(item => {
+                    const fakeScore = item.results?.fakeNews?.score || 0;
+                    const deepfakeScore = item.results?.deepfake?.score || 0;
+                    const maxScore = Math.max(fakeScore, deepfakeScore);
+                    const riskClass = this.getRiskClass(maxScore);
+
+                    return `
+            <div class="history-item" data-risk="${riskClass}">
+              <div class="risk-badge ${riskClass}">${maxScore}%</div>
+              <div class="item-content">
+                <div class="item-title">${new URL(item.url).hostname}</div>
+                <div class="item-url">${item.url}</div>
+                <div class="item-meta">
+                  <span class="meta-item">📰 Fake News: ${fakeScore}%</span>
+                  <span class="meta-item">🖼️ Deepfake: ${deepfakeScore}%</span>
+                  ${item.isAccurate !== undefined ? `
+                    <span class="feedback-badge ${item.isAccurate ? 'accurate' : 'inaccurate'}">
+                      ${item.isAccurate ? '✓ Accurate' : '✗ Inaccurate'}
+                    </span>
+                  ` : ''}
+                </div>
+              </div>
+              <div class="item-date">${this.formatDate(item.timestamp)}</div>
+            </div>
+          `;
+                }).join('');
+            }
+
+            async clearHistory() {
+                if (!confirm('Clear all history?')) return;
+
+                await chrome.storage.local.set({
+                    feedbackData: { total: 0, accurate: 0, inaccurate: 0, reports: [] }
+                });
+                this.history = [];
+                this.render();
+            }
+        }
+
+        new HistoryPage();
+    </script>
+</body>
+
+</html>

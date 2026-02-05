@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Veritas</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+
+<body>
+  <div class="container">
+    <!-- Header -->
+    <header class="header">
+      <div class="logo">
+        <div class="logo-icon">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 2L3 7V12C3 17.55 6.84 22.74 12 24C17.16 22.74 21 17.55 21 12V7L12 2Z" fill="url(#gradient)" />
+            <path d="M10 17L6 13L7.41 11.59L10 14.17L16.59 7.58L18 9L10 17Z" fill="white" />
+            <defs>
+              <linearGradient id="gradient" x1="3" y1="2" x2="21" y2="24">
+                <stop offset="0%" stop-color="#6366f1" />
+                <stop offset="100%" stop-color="#8b5cf6" />
+              </linearGradient>
+            </defs>
+          </svg>
+        </div>
+        <div class="logo-text">
+          <h1>Veritas</h1>
+          <span class="tagline">AI-Powered Truth Detector</span>
+        </div>
+      </div>
+      <button id="settingsBtn" class="icon-btn" title="Settings">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="3" />
+          <path
+            d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
+        </svg>
+      </button>
+    </header>
+
+    <!-- Analysis Section -->
+    <section class="analysis-section">
+      <div class="status-bar" id="statusBar">
+        <div class="status-icon">
+          <div class="pulse-ring"></div>
+          <div class="pulse-dot"></div>
+        </div>
+        <span id="statusText">Ready to analyze</span>
+      </div>
+
+      <button id="analyzeBtn" class="analyze-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8" />
+          <path d="M21 21l-4.35-4.35" />
+        </svg>
+        <span>Analyze Current Page</span>
+      </button>
+    </section>
+
+    <!-- Results Section -->
+    <section class="results-section" id="resultsSection" style="display: none;">
+      <!-- Fake News Result -->
+      <div class="result-card" id="fakeNewsCard">
+        <div class="result-header">
+          <div class="result-icon fake-news-icon">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path
+                d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14h-2v-2h2v2zm0-4h-2V7h2v6z" />
+            </svg>
+          </div>
+          <div class="result-title">
+            <h3>Fake News Detection</h3>
+            <span class="result-label" id="fakeNewsLabel">Analyzing...</span>
+          </div>
+        </div>
+        <div class="confidence-meter">
+          <div class="confidence-bar">
+            <div class="confidence-fill" id="fakeNewsBar"></div>
+          </div>
+          <div class="confidence-labels">
+            <span>Likely Real</span>
+            <span id="fakeNewsPercent">0%</span>
+            <span>Likely Fake</span>
+          </div>
+        </div>
+        <div class="result-details" id="fakeNewsDetails">
+          <div class="detail-item">
+            <span class="detail-label">Source Credibility:</span>
+            <span class="detail-value" id="sourceCredibility">--</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Sensationalism:</span>
+            <span class="detail-value" id="sensationalism">--</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Fact Check:</span>
+            <span class="detail-value" id="factCheck">--</span>
+          </div>
+        </div>
+      </div>
+
+
+      <!-- Credible Sources Section -->
+      <div class="result-card" id="sourcesCard" style="display: none;">
+        <div class="result-header">
+          <div class="result-icon sources-icon">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path
+                d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z" />
+            </svg>
+          </div>
+          <div class="result-title">
+            <h3>Credible Context</h3>
+            <span class="result-label safe">Related Articles</span>
+          </div>
+        </div>
+        <div class="sources-list" id="sourcesList">
+          <!-- Sources will be injected here -->
+        </div>
+      </div>
+    </section>
+
+    <!-- Feedback Section -->
+    <section class="feedback-section" id="feedbackSection" style="display: none;">
+      <h3>Was this analysis helpful?</h3>
+      <div class="feedback-buttons">
+        <button id="accurateBtn" class="feedback-btn accurate">
+          <svg viewBox="0 0 24 24" fill="currentColor">
+            <path
+              d="M1 21h4V9H1v12zm22-11c0-1.1-.9-2-2-2h-6.31l.95-4.57.03-.32c0-.41-.17-.79-.44-1.06L14.17 1 7.59 7.59C7.22 7.95 7 8.45 7 9v10c0 1.1.9 2 2 2h9c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73v-2z" />
+          </svg>
+          <span>Accurate</span>
+        </button>
+        <button id="inaccurateBtn" class="feedback-btn inaccurate">
+          <svg viewBox="0 0 24 24" fill="currentColor">
+            <path
+              d="M15 3H6c-.83 0-1.54.5-1.84 1.22l-3.02 7.05c-.09.23-.14.47-.14.73v2c0 1.1.9 2 2 2h6.31l-.95 4.57-.03.32c0 .41.17.79.44 1.06L9.83 23l6.59-6.59c.36-.36.58-.86.58-1.41V5c0-1.1-.9-2-2-2zm4 0v12h4V3h-4z" />
+          </svg>
+          <span>Inaccurate</span>
+        </button>
+      </div>
+      <div class="feedback-stats" id="feedbackStats">
+        <span id="totalFeedback">0 total reports</span>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <span>Veritas v1.0</span>
+      <a href="#" id="viewHistoryLink">View History</a>
+    </footer>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+
+</html>
